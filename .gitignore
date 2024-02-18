@@ -1,0 +1,6 @@
+sep
+config.py
+data.db
+logs.log
+temp.py
+__pycache__
