@@ -1,0 +1,2 @@
+ID = 123 # Your ID in Telegram. You can get in from https://t.me/username_to_id_bot
+TOKEN = "" # Your telegram bot token. You can get it from https://t.me/BotFather
