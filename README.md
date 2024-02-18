@@ -27,14 +27,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
-5. Start interacting with the bot through your Telegram account. Customize notifications and alerts according to your preferences.
-
 ### Contributing:
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests to help improve this project.
 
 ### Disclaimer:
-Please use this script responsibly and ensure compliance with local fishing regulations and laws. The developers are not responsible for any misuse of this script.
-
----
-
-Feel free to modify and adjust the description to better suit your project's specifics and style.
+Please use this script responsibly and ensure compliance with laws. The developers are not responsible for any misuse of this script.
