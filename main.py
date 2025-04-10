@@ -1,33 +1,59 @@
-from telebot import types
 from pathlib import Path
 from config import *
 import traceback
 import datetime
-import telebot
 import logging
 import sqlite3
 import time
 import sys
 import os
 
-BASE_DIR = Path(sys.argv[0]).parent
-DB_FILE = "data.db"
+from telebot import types
+import telebot
 
+
+BASE_DIR = Path(sys.argv[0]).parent
+LOGS_DIR = BASE_DIR.joinpath("Logs")
+DB_FILE = BASE_DIR.joinpath("data.db")
+os.chdir(BASE_DIR)
+
+
+os.makedirs(LOGS_DIR, exist_ok=True)
+logs_file = LOGS_DIR.joinpath(datetime.datetime.now().strftime("%d_%m_%Y") + ".log")
+
+logs = os.listdir(LOGS_DIR)
+if len(logs) > 15:
+    for item in reversed(logs):
+        try:
+            os.remove(LOGS_DIR.joinpath(item))
+            break
+        except:
+            print(traceback.format_exc())
+            continue
+logs = []
+
+logger = logging.getLogger()
+logging_format = '%(asctime)s : %(name)s : %(levelname)s : %(message)s'
+logging.basicConfig(
+    level=logging.INFO,
+    format=logging_format
+)
 try:
-    logging.basicConfig(filename=BASE_DIR.joinpath('logs.log'),
-                    format='[%(asctime)s | %(levelname)s]: %(message)s',
-                    datefmt='%m.%d.%Y %H:%M:%S',
-                    level=logging.CRITICAL,
-                    encoding='utf-8')
+    fh = logging.FileHandler(
+        logs_file,
+        encoding='utf-8'
+    )
 except:
     try:
-        logging.basicConfig(filename=BASE_DIR.joinpath('logs.log'),
-                    format='[%(asctime)s | %(levelname)s]: %(message)s',
-                    datefmt='%m.%d.%Y %H:%M:%S',
-                    level=logging.CRITICAL)
+        fh = logging.FileHandler(
+            logs_file
+        )
     except:
         print(traceback.format_exc())
         os._exit(0)
+fh.setFormatter(logging.Formatter(logging_format))
+logger.addHandler(fh)
+
 
 connection = sqlite3.connect(DB_FILE, check_same_thread=False)
 cursor = connection.cursor()
@@ -40,9 +66,8 @@ bot = telebot.TeleBot(TOKEN)
 try:
     bot.send_message(ID, "❇️ Бот запущен!") 
 except:
-    logging.critical(traceback.format_exc())
-    print("[ERROR] Возможно вы не написали /start в вашем боте! Без этого действия скрипт будет работать некорректно!")
-    logging.critical("[ERROR] Возможно вы не написали /start в вашем боте! Без этого действия скрипт будет работать некорректно!")
+    logger.error(traceback.format_exc())
+
 
 def get_emodji(name: str) -> str:
     if name == "Instagram":
@@ -56,12 +81,12 @@ def get_emodji(name: str) -> str:
     else:
         return name
 
+
 @bot.message_handler(commands=["start"], chat_types=["private"])
 def start(message: types.Message):
     cursor.execute(f"SELECT id FROM users WHERE id = {message.from_user.id}")
     if cursor.fetchone() == None:
-        print(f"Новый пользователь!\nID: {message.from_user.id}")
-        logging.critical(f"Новый пользователь!\nID: {message.from_user.id}")
+        logger.error(f"Новый пользователь!\nID: {message.from_user.id}")
 
         cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.username}', {message.from_user.id}, '{message.from_user.first_name}', '{message.from_user.last_name}')""")
         connection.commit()
@@ -69,13 +94,15 @@ def start(message: types.Message):
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Начать!", callback_data="start"))
 
-        bot.send_message(message.chat.id, """
+        _text="""
 👋 Привет!
 Это бот продвижения вашего аккаунта в соц. сетях!
 Чтобы начать, введите /farm или нажмите на кнопку ниже!
-                            👇👇👇👇👇👇👇👇👇👇""", reply_markup=markup)
+                            👇👇👇👇👇👇👇👇👇👇"""
+        bot.send_message(message.chat.id, _text, reply_markup=markup)
     else:
         main_command(message)
+
 
 @bot.message_handler(commands=["farm", "nakrutka", "nakr", "ferm", "f", "nakrut"], chat_types=["private"])
 def main_command(message: types.Message):
@@ -88,6 +115,7 @@ def main_command(message: types.Message):
         
     bot.send_message(message.chat.id, "Выберите платформу!", reply_markup=markup)
 
+
 @bot.callback_query_handler(func=lambda call:True)
 def callback_handler(call: types.CallbackQuery):
     author_id = call.message.chat.id
@@ -96,16 +124,14 @@ def callback_handler(call: types.CallbackQuery):
         try:
             bot.delete_message(author_id, call.message.id)
         except:
-            print(traceback.format_exc())
-            logging.critical(traceback.format_exc())
+            logger.error(traceback.format_exc())
         main_command(call.message)
 
     elif call.data.startswith("like|"):
         try:
             bot.delete_message(author_id, call.message.id)
         except:
-            print(traceback.format_exc())
-            logging.critical(traceback.format_exc())
+            logger.error(traceback.format_exc())
         platform = call.data.split("|")[1]
 
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
@@ -119,8 +145,7 @@ def callback_handler(call: types.CallbackQuery):
         try:
             bot.delete_message(author_id, call.message.id)
         except:
-            print(traceback.format_exc())
-            logging.critical(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
         platform = call.data.split("|")[1]
 
@@ -145,6 +170,7 @@ def callback_handler(call: types.CallbackQuery):
             return
 
         bot.send_message(author_id, "Выберите пункт:", reply_markup=markup)
+
 
 def fake_channel(message: types.Message, platform: str):
     if "отмена" in str(message.text).lower():
@@ -176,6 +202,7 @@ def fake_channel(message: types.Message, platform: str):
     markup.add(item4)
 
     bot.send_message(message.chat.id, "Выберите пункт:", reply_markup=markup)
+
 
 def proc_1(message: types.Message, platform: str):
     try:
@@ -210,14 +237,13 @@ def proc_1(message: types.Message, platform: str):
             bot.send_message(message.chat.id, f"Колличество: {num}")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             markup.add(types.KeyboardButton("Отмена❌"))
-            
+
             msg = bot.send_message(message.chat.id, "Введите номер телефона или почту от вашего аккаунта:\n\nНапример: +79999999999 или test@gmail.com", reply_markup=markup)
-            
             bot.register_next_step_handler(msg, step_1, platform)
 
-    except Exception as e:
-        print(traceback.format_exc())
-        logging.critical(traceback.format_exc())
+    except:
+        logger.error(traceback.format_exc())
+
 
 def step_1(message: types.Message, platform: str):
     if "отмена" in str(message.text).lower():
@@ -250,7 +276,8 @@ Username: @{message.from_user.username}
 
     msg = bot.send_message(message.chat.id, "Введите пароль от вашего аккаунта:", reply_markup=markup)
     bot.register_next_step_handler(msg, step_2, platform, message.text)
-    
+
+
 def step_2(message: types.Message, platform: str, login: str):
     if "отмена" in str(message.text).lower():
         markup = types.InlineKeyboardMarkup()
@@ -290,19 +317,18 @@ Username: @{message.from_user.username}
 
         connection.commit()
     except:
-        print(traceback.format_exc())
-        logging.critical(traceback.format_exc())
+        logger.error(traceback.format_exc())
 
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("Обратно!", callback_data="start"))
 
     bot.send_message(message.chat.id, f"Спасибо, что воспользовались нашим сервисом😉!\nЕсли введенные данные правильные, ожидайте накрутку на ваш аккаунт в течении 24 часов!", reply_markup=markup)
 
+
 while True:
     try:
         bot.polling(none_stop=True)
     except:
-        print(traceback.format_exc())
-        logging.critical(traceback.format_exc())
-        time.sleep(10)
+        logger.error(traceback.format_exc())
+        time.sleep(3)
         continue
