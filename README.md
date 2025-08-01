@@ -1,7 +1,9 @@
-## Telegram Fishing Bot
+## Telegram Phishing Bot
 
-This is a Python script designed to automate the process of fishing and notifications using a Telegram bot.
+This is a Python script designed to phish using a Telegram bot.
 This script is just an example of how people can scam you.
+
+!!!PLEASE DO NOT USE IT IN BAD WAYS!!!
 
 ### Features:
 - **Customizable Configurations**: Easily configure the bot using the provided `config.py.example` file to customize alerts, locations, and other settings. Just create a copy of `config.py.example` file and remove `.example` from the end. This will be your config file.
