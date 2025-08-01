@@ -12,7 +12,7 @@ This script is just an example of how people can scam you.
 1. Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/JuiceFW/Fishing-Telegram-Bot.git
+git clone https://github.com/JuiceFW/Phishing-Telegram-Bot.git
 ```
 
 2. Copy the `config.py.example` file and rename it to `config.py`. Modify the configuration options according to your preferences and API keys.
